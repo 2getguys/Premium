@@ -1,0 +1,11 @@
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+requests
+# Trello client library (e.g., py-trello, will add specific one later if needed)
+# Gemini library
+google-generativeai
+httpx # Added based on Gemini docs
+python-dotenv # For loading .env files
+py-trello # For Trello integration 
+APScheduler # For scheduling VAT calculation 

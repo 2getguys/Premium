@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  app:
+    build: .
+    container_name: invoice_processor
+    restart: unless-stopped
+    volumes:
+      # Підключаємо credentials.json (тільки для читання - рекомендовано)
+      - ./credentials.json:/app/credentials.json:ro
+      # Підключаємо token.json (для читання та запису, оскільки він може оновлюватися)
+      # Переконайтесь, що token.json існує або буде створений коректно з правами на запис
+      - ./token.json:/app/token.json 
+      # Директорія для зберігання бази даних SQLite
+      # Docker створить директорію /app/db_data в контейнері, якщо її немає.
+      # Файл processed_emails.db буде створений всередині /app/db_data/ в контейнері
+      # і буде зберігатися в ./db_data на хост-машині.
+      - ./db_data:/app/db_data 
+    env_file:
+      - ./.env
+    # Якщо у вас є файл .env, який використовує python-dotenv, 
+    # і він копіюється в образ, то цей розділ environment або env_file може бути не потрібний,
+    # оскільки load_dotenv() в main.py його завантажить.
+    # Залишення `env_file: .env` є простим способом, якщо ваш .env файл містить всі секрети. 
