@@ -1,3 +1,4 @@
 gcp_service_account.json
 token.json
 credentials.json
+.env
