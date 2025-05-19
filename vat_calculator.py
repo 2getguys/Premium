@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 # Column indices from config.SHEET_HEADERS (for reading monthly invoice data)
 # config.SHEET_HEADERS = [
-#     "Дата виставлення", "Виставив", "Дата оплати", "Платник",
-#     "Сума (брутто)", "VAT", "Пов'язано з авто/паливом", "Посилання на Google Drive"
+#     "Номер фактури", "Дата виставлення", "Виставив", "Дата оплати", "Платник",
+#     "NIP Платника", "Сума (брутто)", "VAT", "Пов'язано з авто/паливом", "Посилання на Google Drive"
 # ]
+COL_IDX_INVOICE_NUMBER = config.SHEET_HEADERS.index("Номер фактури")
 COL_IDX_INVOICE_DATE = config.SHEET_HEADERS.index("Дата виставлення")
-COL_IDX_ISSUER = config.SHEET_HEADERS.index("Виставив")
 COL_IDX_GROSS_AMOUNT = config.SHEET_HEADERS.index("Сума (брутто)")
 COL_IDX_VAT = config.SHEET_HEADERS.index("VAT")
 COL_IDX_IS_FUEL_RELATED = config.SHEET_HEADERS.index("Пов'язано з авто/паливом")
@@ -70,17 +70,17 @@ def calculate_and_record_vat_summary():
         # Potential issue: if columns are actually different, indices might be wrong.
         # For now, we trust the indices derived from config at the top of the file.
 
-    # --- Deduplication (based on Issuer, Invoice Date, Gross Amount) ---
+    # --- Deduplication (based on Invoice Number, Invoice Date, Gross Amount) ---
     processed_invoices = set()
     unique_invoice_rows = []
     for row in invoice_rows:
         try:
             # Ensure row has enough columns before accessing by index
-            if len(row) > max(COL_IDX_ISSUER, COL_IDX_INVOICE_DATE, COL_IDX_GROSS_AMOUNT):
-                issuer = row[COL_IDX_ISSUER].strip()
+            if len(row) > max(COL_IDX_INVOICE_NUMBER, COL_IDX_INVOICE_DATE, COL_IDX_GROSS_AMOUNT):
+                invoice_number = row[COL_IDX_INVOICE_NUMBER].strip()
                 invoice_date = row[COL_IDX_INVOICE_DATE].strip()
                 gross_amount_str = row[COL_IDX_GROSS_AMOUNT].strip()
-                invoice_key = (issuer, invoice_date, gross_amount_str)
+                invoice_key = (invoice_number, invoice_date, gross_amount_str)
                 if invoice_key not in processed_invoices:
                     unique_invoice_rows.append(row)
                     processed_invoices.add(invoice_key)
