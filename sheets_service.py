@@ -178,6 +178,7 @@ def append_invoice_to_sheet(invoice_data: dict, drive_file_link: str) -> str | N
             str(invoice_data.get('issuer', '')),
             str(invoice_data.get('due_date', '')),
             str(invoice_data.get('payer', '')),
+            str(invoice_data.get('payer_nip', '')),
             str(invoice_data.get('gross_amount', '')).replace('.', ','), # Sheets often prefers comma for decimal in some locales
             str(invoice_data.get('vat_amount', '')).replace('.', ','),   # Sheets often prefers comma for decimal in some locales
             "Так" if invoice_data.get('is_fuel_related') else "Ні",

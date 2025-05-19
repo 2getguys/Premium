@@ -34,6 +34,7 @@ def init_db():
                 issuer TEXT,
                 due_date TEXT,
                 payer TEXT,
+                payer_nip TEXT,
                 gross_amount REAL,
                 vat_amount REAL,
                 is_fuel_related INTEGER, -- 0 for false, 1 for true
@@ -116,20 +117,21 @@ def add_invoice(invoice_data: dict) -> int | None:
         cursor = conn.execute('''
             INSERT INTO invoices (
                 invoice_number, invoice_date, issuer, due_date, payer, 
-                gross_amount, vat_amount, is_fuel_related,
+                payer_nip, gross_amount, vat_amount, is_fuel_related,
                 google_drive_file_id, google_drive_file_weblink, trello_card_id,
                 google_sheets_row_id, original_email_id, attachment_filename
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             invoice_data.get('invoice_number'), invoice_data.get('invoice_date'),
             invoice_data.get('issuer'), invoice_data.get('due_date'),
-            invoice_data.get('payer'), invoice_data.get('gross_amount'),
-            invoice_data.get('vat_amount'), is_fuel_related_int,
+            invoice_data.get('payer'), invoice_data.get('payer_nip'),
+            invoice_data.get('gross_amount'), invoice_data.get('vat_amount'),
+            is_fuel_related_int,
             invoice_data.get('google_drive_file_id'), 
             invoice_data.get('google_drive_file_weblink'),
             invoice_data.get('trello_card_id'), 
-            invoice_data.get('google_sheets_row_id'), # For future use
+            invoice_data.get('google_sheets_row_id'),
             invoice_data.get('original_email_id'),
             invoice_data.get('attachment_filename')
         ))
@@ -170,7 +172,7 @@ def find_invoice(details: dict) -> dict | None:
         query = '''
             SELECT * FROM invoices 
             WHERE invoice_number = ? AND invoice_date = ? AND issuer = ? 
-            AND due_date = ? AND payer = ? AND gross_amount = ? 
+            AND due_date = ? AND payer = ? AND payer_nip = ? AND gross_amount = ? 
             AND vat_amount = ? AND is_fuel_related = ?
             ORDER BY created_at DESC 
             LIMIT 1 
@@ -178,8 +180,8 @@ def find_invoice(details: dict) -> dict | None:
         cursor = conn.execute(query, (
             details.get('invoice_number'), details.get('invoice_date'),
             details.get('issuer'), details.get('due_date'),
-            details.get('payer'), gross_amount,
-            vat_amount, is_fuel_related_int
+            details.get('payer'), details.get('payer_nip'),
+            gross_amount, vat_amount, is_fuel_related_int
         ))
         row = cursor.fetchone()
         return dict(row) if row else None

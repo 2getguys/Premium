@@ -91,6 +91,11 @@ def process_single_invoice(file_path: str, email_id: str, attachment_filename: s
     """
     logger.info(f"--- Processing invoice file: {attachment_filename} (from email {email_id}) ---")
     
+    # Перевіряємо чи файл не є ZIP архівом
+    if file_path.lower().endswith('.zip'):
+        logger.info(f"Skipping ZIP file: {attachment_filename}")
+        return True  # Повертаємо True, бо це не помилка, а навмисне пропускання
+    
     analysis_result = gemini_analyzer.analyze_invoice(file_path)
 
     if not analysis_result:

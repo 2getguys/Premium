@@ -22,7 +22,7 @@ GOOGLE_SHEET_ID_FAKTURY_ENV = "GOOGLE_SHEET_ID_FAKTURY" # Main spreadsheet for i
 # Пов'язано з авто/паливом
 SHEET_HEADERS = [
     "Номер фактури", "Дата виставлення", "Виставив", "Дата оплати", "Платник",
-    "Сума (брутто)", "VAT", "Пов\'язано з авто/паливом", "Посилання на Google Drive"
+    "NIP Платника", "Сума (брутто)", "VAT", "Пов\'язано з авто/паливом", "Посилання на Google Drive"
 ]
 
 VAT_SUMMARY_SHEET_NAME = "VAT Звіт" # Sheet name for VAT summaries

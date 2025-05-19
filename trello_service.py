@@ -81,10 +81,11 @@ def create_trello_card(invoice_data: dict, invoice_file_path: str, drive_file_li
             f"{config.SHEET_HEADERS[2]}: {invoice_data.get('issuer', 'N/A')}",         # Виставив
             f"{config.SHEET_HEADERS[3]}: {invoice_data.get('due_date', 'N/A')}",           # Дата оплати
             f"{config.SHEET_HEADERS[4]}: {invoice_data.get('payer', 'N/A')}",          # Платник
-            f"{config.SHEET_HEADERS[5]}: {invoice_data.get('gross_amount', 'N/A')}",   # Сума (брутто)
-            f"{config.SHEET_HEADERS[6]}: {invoice_data.get('vat_amount', 'N/A')}",          # VAT
-            f"{config.SHEET_HEADERS[7]}: {is_fuel_related_str}",                         # Пов'язано з авто/паливом
-            f"{config.SHEET_HEADERS[8]}: {drive_file_link if drive_file_link else 'N/A'}" # Посилання на Google Drive
+            f"{config.SHEET_HEADERS[5]}: {invoice_data.get('payer_nip', 'N/A')}",      # NIP Платника
+            f"{config.SHEET_HEADERS[6]}: {invoice_data.get('gross_amount', 'N/A')}",   # Сума (брутто)
+            f"{config.SHEET_HEADERS[7]}: {invoice_data.get('vat_amount', 'N/A')}",          # VAT
+            f"{config.SHEET_HEADERS[8]}: {is_fuel_related_str}",                         # Пов'язано з авто/паливом
+            f"{config.SHEET_HEADERS[9]}: {drive_file_link if drive_file_link else 'N/A'}" # Посилання на Google Drive
         ]
         description = "\n".join(description_parts)
 
