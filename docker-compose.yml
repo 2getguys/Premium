@@ -16,6 +16,8 @@ services:
       # Файл processed_emails.db буде створений всередині /app/db_data/ в контейнері
       # і буде зберігатися в ./db_data на хост-машині.
       - ./db_data:/app/db_data 
+      # Підключаємо config.py (тільки для читання)
+      - ./config.py:/app/config.py:ro
     env_file:
       - ./.env
     # Якщо у вас є файл .env, який використовує python-dotenv, 

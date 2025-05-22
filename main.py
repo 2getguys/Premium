@@ -98,12 +98,20 @@ def process_single_invoice(file_path: str, email_id: str, attachment_filename: s
     
     analysis_result = gemini_analyzer.analyze_invoice(file_path)
 
-    if not analysis_result:
-        logger.error(f"[FAILED] Gemini analysis failed for {attachment_filename}. Skipping further steps for this file.")
-        return False
+    if analysis_result is None:
+        # Лог з gemini_analyzer вже пояснив причину (наприклад, "is not a standard invoice or receipt")
+        # Тому тут ми просто підтверджуємо, що файл пропущено коректно.
+        logger.info(f"Document {attachment_filename} was intentionally skipped by Gemini analyzer (e.g., not a standard invoice/receipt). This is expected behavior.")
+        return True # Повертаємо True, оскільки це не помилка обробки, а коректний пропуск.
     
     # Ensure all required keys from Gemini are present, including invoice_number
-    required_gemini_keys = {'invoice_number', 'invoice_date', 'due_date', 'payer', 'issuer', 'gross_amount', 'vat_amount', 'is_fuel_related'}
+    # Note: This check might seem redundant if Gemini returns None for non-standard invoices above,
+    # but it's a good safeguard if analyze_invoice changes its return for non-skipped but incomplete data.
+    # Required keys are now checked within gemini_analyzer.py before returning, so this specific block might be simplified
+    # or removed if we trust gemini_analyzer to always return None or a complete dict for processable types.
+    # For now, keeping it as a defense layer.
+    required_gemini_keys = {'document_type', 'is_paid', 'invoice_number', 'invoice_date', 'due_date', 'payer', 'issuer', 'gross_amount', 'vat_amount', 'is_fuel_related'}
+    # Payer_nip is not strictly required here as it can be derived.
     if not required_gemini_keys.issubset(analysis_result.keys()):
         logger.error(f"[FAILED] Gemini analysis for {attachment_filename} missing one or more required keys: {required_gemini_keys - set(analysis_result.keys())}. Raw: {analysis_result}")
         return False
@@ -172,23 +180,35 @@ def process_single_invoice(file_path: str, email_id: str, attachment_filename: s
         logger.info(f"[SUCCESS] File {attachment_filename} uploaded to Google Drive. ID: {drive_file_data.get('id')}, Link: {drive_file_data.get('link')}")
     else:
         logger.warning("[SKIPPED] Google Drive service not available. Cannot upload.")
-        return False # If Drive is essential, this is a failure
+        # Depending on requirements, this might be a critical failure if Drive upload is essential
+        # For now, let's assume it might proceed if other essential parts are okay or if Drive is optional for some workflows.
+        # Consider returning False if Drive is absolutely mandatory for all documents.
+        pass # Or return False if Drive is mandatory
 
-    # 2. Create Trello Card
+    # 2. Create Trello Card - only if the document is not paid and is a standard invoice
     trello_card_id_val = None
-    if drive_file_data and drive_file_data.get('link'): # Requires Drive link
-        logger.info(f"Attempting to create Trello card for {attachment_filename}...")
-        trello_card_id_val = trello_service.create_trello_card(
-            invoice_data=current_invoice_details_from_gemini,
-            invoice_file_path=file_path, # For attachment
-            drive_file_link=drive_file_data['link']
-        )
-        if trello_card_id_val:
-            logger.info(f"[SUCCESS] Trello card created for {attachment_filename}. ID: {trello_card_id_val}")
+    is_paid_status = current_invoice_details_from_gemini.get('is_paid', False) # Default to False if key is missing
+    doc_type_for_trello = current_invoice_details_from_gemini.get('document_type')
+
+    if doc_type_for_trello == 'standard_invoice' and not is_paid_status:
+        if drive_file_data and drive_file_data.get('link'): # Requires Drive link
+            logger.info(f"Attempting to create Trello card for unpaid standard invoice {attachment_filename}...")
+            trello_card_id_val = trello_service.create_trello_card(
+                invoice_data=current_invoice_details_from_gemini,
+                invoice_file_path=file_path, # For attachment
+                drive_file_link=drive_file_data['link']
+            )
+            if trello_card_id_val:
+                logger.info(f"[SUCCESS] Trello card created for {attachment_filename}. ID: {trello_card_id_val}")
+            else:
+                logger.warning(f"[WARNING] Failed to create Trello card for {attachment_filename}. This is non-critical for DB entry.")
         else:
-            logger.warning(f"[WARNING] Failed to create Trello card for {attachment_filename}. This is non-critical for DB entry.")
+            logger.info(f"[SKIPPED] Trello card creation for {attachment_filename} due to missing Drive link (even though it's an unpaid invoice).")
     else:
-        logger.info(f"[SKIPPED] Trello card creation for {attachment_filename} due to missing Drive link.")
+        if doc_type_for_trello != 'standard_invoice':
+            logger.info(f"[SKIPPED] Trello card creation for {attachment_filename} because document type is '{doc_type_for_trello}' (not 'standard_invoice').")
+        elif is_paid_status:
+            logger.info(f"[SKIPPED] Trello card creation for {attachment_filename} because it is marked as paid (is_paid: {is_paid_status}).")
 
     # 3. Store in Database
     invoice_to_save_in_db = current_invoice_details_from_gemini.copy() # Start with Gemini data

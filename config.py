@@ -28,6 +28,8 @@ SHEET_HEADERS = [
 VAT_SUMMARY_SHEET_NAME = "VAT Звіт" # Sheet name for VAT summaries
 VAT_SUMMARY_HEADERS = [
     "Звітний Місяць.Рік",                  # report_month_year
+    "Платник",                             # payer_name
+    "NIP Платника",                        # payer_nip
     "Загальна сума VAT (до вирахувань)",   # total_vat_before_deduction
     "VAT Авто (100%)",                     # total_fuel_auto_vat_100
     "VAT до сплати (після вирахувань)"     # final_vat_payable
@@ -37,7 +39,7 @@ VAT_SUMMARY_HEADERS = [
 GMAIL_QUERY = "has:attachment label:inbox"
 # Optional: Process emails received only after this date (YYYY-MM-DD).
 # If None or empty, all emails matching GMAIL_QUERY will be considered.
-PROCESS_EMAILS_AFTER_DATE = "2025-05-14" # Example: "2024-01-01"
+PROCESS_EMAILS_AFTER_DATE = "2025-05-20" # Example: "2024-01-01"
 
 # Other
 MONTH_YEAR_FORMAT = "%m.%Y"

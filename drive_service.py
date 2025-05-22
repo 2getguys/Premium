@@ -80,20 +80,31 @@ def upload_invoice_to_drive(service: Resource, local_file_path: str, invoice_dat
             print(f"Failed to get or create base folder: {DRIVE_PARENT_FOLDER_NAME}")
             return None
 
-        # 2. Get/Create the MonthYear folder
+        # Parse invoice_date to get year and month
         try:
             invoice_date_obj = datetime.datetime.strptime(invoice_data['invoice_date'], '%Y-%m-%d')
-            month_year_folder_name = invoice_date_obj.strftime(MONTH_YEAR_FORMAT)
+            year_folder_name = invoice_date_obj.strftime('%Y')
+            # Use only month number for the month folder, as year is now a separate parent folder
+            month_folder_name = invoice_date_obj.strftime('%m') # Changed from MONTH_YEAR_FORMAT
         except (KeyError, ValueError) as e:
-            print(f"Error parsing invoice_date from invoice_data: {e}. Using generic month_year folder.")
-            month_year_folder_name = "Unknown_MonthYear"
-        
-        month_year_folder_id = get_or_create_folder(service, month_year_folder_name, parent_folder_id)
-        if not month_year_folder_id:
-            print(f"Failed to get or create month/year folder: {month_year_folder_name}")
+            print(f"Error parsing invoice_date from invoice_data: {e}. Using generic year/month folders.")
+            year_folder_name = "Unknown_Year"
+            month_folder_name = "Unknown_Month"
+
+        # 2. Get/Create the Year folder
+        year_folder_id = get_or_create_folder(service, year_folder_name, parent_folder_id)
+        if not year_folder_id:
+            print(f"Failed to get or create year folder: {year_folder_name}")
             return None
 
-        # 3. Get/Create the Payer folder (Юр лице)
+        # 3. Get/Create the Month folder (inside the Year folder)
+        # month_year_folder_name was here, now it's month_folder_name
+        month_folder_id = get_or_create_folder(service, month_folder_name, year_folder_id) # Changed parent to year_folder_id
+        if not month_folder_id:
+            print(f"Failed to get or create month folder: {month_folder_name}")
+            return None
+
+        # 4. Get/Create the Payer folder (Юр лице) - parent is now month_folder_id
         payer_folder_name = invoice_data.get('payer', 'Unknown_Payer')
         if not payer_folder_name or not isinstance(payer_folder_name, str) or payer_folder_name.isspace():
             payer_folder_name = "Unknown_Payer"
@@ -102,18 +113,18 @@ def upload_invoice_to_drive(service: Resource, local_file_path: str, invoice_dat
         if not payer_folder_name:
              payer_folder_name = "Invalid_Payer_Name"
 
-        payer_folder_id = get_or_create_folder(service, payer_folder_name, month_year_folder_id)
+        payer_folder_id = get_or_create_folder(service, payer_folder_name, month_folder_id) # Changed from month_year_folder_id
         if not payer_folder_id:
             print(f"Failed to get or create payer folder: {payer_folder_name}")
             return None
 
-        # 4. Get/Create the final "Фактури" folder
+        # 5. Get/Create the final "Фактури" folder - parent is payer_folder_id (remains the same)
         final_invoices_folder_id = get_or_create_folder(service, DRIVE_INVOICE_FOLDER_NAME, payer_folder_id)
         if not final_invoices_folder_id:
             print(f"Failed to get or create final invoices folder: {DRIVE_INVOICE_FOLDER_NAME}")
             return None
 
-        # 5. Upload the file
+        # 6. Upload the file
         file_name = os.path.basename(local_file_path)
         file_metadata = {
             'name': file_name,
